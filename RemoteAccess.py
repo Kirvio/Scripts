@@ -38,4 +38,4 @@ if __name__ == "__main__":
     #parser.add_argument("--enable-password", help="Switch enable password", required=True)
     parser.add_argument("--quiet", help="Don't show interactive info on stderr", action="store_true")
     args = parser.parse_args()
-    print(dump_cisco_config(ip=args.address, username='root', ssh_password='V62xisX3hnWM', quiet=args.quiet))
+    print(dump_cisco_config(ip=args.address, username='', ssh_password='', quiet=args.quiet))
