@@ -2,14 +2,13 @@ import paramiko
 import time
 import os
 
-"""
-Скрипт закидывает с хоста (с начала на сервер, потом в министру) готовый xmltv.xml файл
-по ssh. Для передачи файлов используется paramiko.Transport(sftp), для подключения по ssh paramiko.SSHClient() 
+"""This script is used to transport ready EPG.xmltv file
+   to ministra in our server
 """
 
-host = '172.16.100.54'
-user = 'evandrushenko'
-secret = '1234567Andr'
+host = ''
+user = ''
+secret = ''
 port = 22
 remotepath = '/home/evandrushenko/xmltv.xml'
 localpath = 'D:\\EPG\\xmltv.xml'
