@@ -1,6 +1,7 @@
-import webbrowser
-import patoolib
+from urllib3 import PoolManager
+import shutil
 import time
+import gzip
 import os
 
 """
@@ -9,55 +10,69 @@ import os
 """
 
 url = 'https://iptvx.one/EPG'
-DirPath = 'D:\\EPG\\'
-IncPath = 'C:\\Users\\evandrushenko\\Downloads\\epg.xml.gz'
-WebBrwser = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+epg_path = 'D:/EPG/'
+archive_path = 'C:/Users/evandrushenko/Downloads/epg.xml.gz'
 
-def RMFunct(EnterPath, EnterFile):
-    path = os.path.join(os.path.abspath(os.path.dirname(EnterPath)), EnterFile)
+def Remove(EnterPath, EnterFile):
+    path = os.path.join(os.path.abspath(\
+                        os.path.dirname(EnterPath)), EnterFile)
     os.remove(path)
 
-def WebFunction(WebBrowser, Nurl):
-    webbrowser.register('Chrome', None, webbrowser.BackgroundBrowser(WebBrowser))
-    webbrowser.get('Chrome').open(Nurl)
-    time.sleep(4)
+def Download(url_, path_):
+    http = PoolManager()
+    r = http.request('GET', url_, preload_content=False)
 
-def MeinLeben():
-    WebFunction(WebBrwser, url)
-    time.sleep(4)
-    patoolib.extract_archive(IncPath, outdir = DirPath)
+    with open(path_, 'wb') as out:
+        while True:
+            data = r.read(1024)
+            if not data:
+                break
+            out.write(data)
+    print('EPG Downloaded')
+    r.release_conn()
+
+def Extract_archive(url_, download_path, file_path):
+    Download(url_, download_path)
+    with gzip.open(download_path, 'rb') as archive_:
+        with open(file_path, 'wb') as file_:
+            shutil.copyfileobj(archive_, file_)
+            print('all done')
 
 def MainFunction():     
     try:
-        kek = os.path.isfile(IncPath)
-        FilePath = '\\'.join([DirPath, 'epg.xml'])
-        kak = os.path.isfile(FilePath)
-        if kak and kek:   
-            RMFunct(IncPath, EnterFile = 'epg.xml.gz')
-            [os.remove(file.path) for file in os.scandir(DirPath)]
+        exist_file = os.path.isfile(archive_path)
+        full_path = '/'.join([epg_path, 'epg.xml'])
+        exist_archive = os.path.isfile(full_path)
+        result = False
+        if exist_archive and exist_file:   
+            Remove(archive_path, EnterFile = 'epg.xml.gz')
+            (os.remove(file.path) for file in os.scandir(epg_path))
             time.sleep(0.3)
-            MeinLeben()
-            return True
-        elif kek and not kak:
-            RMFunct(IncPath, EnterFile = 'epg.xml.gz')
+            Extract_archive(url, archive_path, full_path)
+            result = True
+        elif exist_file and not exist_archive:
+            Remove(archive_path, EnterFile = 'epg.xml.gz')
             time.sleep(0.3)
-            MeinLeben()
-            return True
-        elif kak and not kek:
-
-            # os.scandir метод для сканирование файлов в директории и os.remove для их удаления        
-            [os.remove(file.path) for file in os.scandir(DirPath)]
+            Extract_archive(url, archive_path, full_path)
+            result = True
+        elif exist_archive and not exist_file:     
+            (os.remove(file.path) for file in os.scandir(epg_path))
             time.sleep(0.3)
-            MeinLeben()          
-            return True
+            Extract_archive(url, archive_path, full_path)
+            result = True       
         else:
-            MeinLeben()
-            return True
-    except (webbrowser.Error, Exception, OSError) as err:
+            Extract_archive(url, archive_path, full_path)
+            result = True
+    except (Exception, OSError) as err:
         print(err)
-    else:
-        return True
+        result = False
+        raise
+    finally:
+        return result
 
 if __name__ == '__main__':
     MF = MainFunction()
-    os.startfile(r'D:\\Network\\КИТ Интернет телепрограмма\\КИТ Интернет телепрограмма.exe') if MF else print('Ошибка')
+    if MF:
+        os.startfile('D:/Network/КИТ Интернет телепрограмма/КИТ Интернет телепрограмма.exe')
+    else: 
+        print('Ошибка')
