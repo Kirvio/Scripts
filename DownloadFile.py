@@ -10,8 +10,8 @@ import os
 """
 
 url = 'https://iptvx.one/EPG'
-epg_path = 'D:/EPG/'
-archive_path = 'C:/Users/evandrushenko/Downloads/epg.xml.gz'
+epg_path = 'D:\\EPG'
+archive_path = 'C:\\Users\\evandrushenko\\Downloads\\epg.xml.gz'
 
 def Remove(EnterPath, EnterFile):
     path = os.path.join(os.path.abspath(\
@@ -38,29 +38,30 @@ def Extract_archive(url_, download_path, file_path):
             shutil.copyfileobj(archive_, file_)
             print('all done')
 
-def MainFunction():     
+def MainFunction():
     try:
-        exist_file = os.path.isfile(archive_path)
-        full_path = '/'.join([epg_path, 'epg.xml'])
-        exist_archive = os.path.isfile(full_path)
+        exist_archive = os.path.isfile(archive_path)
+        full_path = '\\'.join([epg_path, 'epg.xml'])
+        exist_file = os.path.isfile(full_path)
         result = False
-        if exist_archive and exist_file:   
+        if exist_archive and exist_file:
             Remove(archive_path, EnterFile = 'epg.xml.gz')
-            (os.remove(file.path) for file in os.scandir(epg_path))
+            [os.remove(file.path) for file in os.scandir(epg_path)]
             time.sleep(0.3)
             Extract_archive(url, archive_path, full_path)
             result = True
         elif exist_file and not exist_archive:
+            [os.remove(file.path) for file in os.scandir(epg_path)]
+            Extract_archive(url, archive_path, full_path)
+            time.sleep(0.3)
+            result = True
+        elif exist_archive and not exist_file:
             Remove(archive_path, EnterFile = 'epg.xml.gz')
             time.sleep(0.3)
             Extract_archive(url, archive_path, full_path)
             result = True
-        elif exist_archive and not exist_file:     
-            (os.remove(file.path) for file in os.scandir(epg_path))
-            time.sleep(0.3)
-            Extract_archive(url, archive_path, full_path)
-            result = True       
         else:
+            print('not at all')
             Extract_archive(url, archive_path, full_path)
             result = True
     except (Exception, OSError) as err:
