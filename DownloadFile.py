@@ -20,7 +20,7 @@ def Remove(EnterPath, EnterFile):
 
 def Download(url_, path_):
     http = PoolManager()
-    r = http.request('POST', url_, preload_content=False)
+    r = http.request('GET', url_, preload_content=False)
 
     _recv_buffer = b''
     result = False
