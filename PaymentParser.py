@@ -4,7 +4,7 @@ import logging
 import sys
 import time
 
-document1 = 'C:\\PythonProgs\\Для отчета\\Платежи(Перерасчет)\\Payment report.xml'
+document = 'C:\\PythonProgs\\ForReports\\Payments\\Payment report.xml'
 
 def parsingxml(xml):
     try:
@@ -29,46 +29,56 @@ def parsingxml(xml):
         y = zip(*[iter(y)] * 7)
         yield tuple(y)
 
-def check_type(xml):
-    data = next(parsingxml(xml))
-    log.info(f"Суммарно: {len(data)}")
-    x = [item for item in data if item[6] == "Перерасчет (103)"]
-    y = [item for item in data if item[6] == "Перенос денежных средств (106)"]
-    z = [item for item in data if item[6] == "Оплата наличными (возврат средств) (109)"]
-
-    log.info(f"Количество перерасчетов за Июнь: {len(x)}")
-    log.info(f"Количество переносов за Июнь: {len(y)}")
-    log.info(f"Количество возвратов за Июнь: {len(z)}")
+def transform_data(workbook_, data):
     try:
-        with Workbook('C:\\PythonProgs\\Для отчета\\Платежи(Перерасчет)\\Платежи.xlsx') as workbook:
-            worksheet = workbook.add_worksheet()
-            [[worksheet.write(row_num+1, col_num, col_data), \
-              worksheet.set_column(col_num, 5, 20)] \
-                                                    for row_num, row_data in enumerate(x)\
-                                                    for col_num, col_data in enumerate(row_data)]
-            worksheet = workbook.add_worksheet()
-            [[worksheet.write(row_num+1, col_num, col_data), \
-              worksheet.set_column(col_num, 5, 20)] \
-                                                    for row_num, row_data in enumerate(y)\
-                                                    for col_num, col_data in enumerate(row_data)]
-            worksheet = workbook.add_worksheet()
-            [[worksheet.write(row_num+1, col_num, col_data), \
-              worksheet.set_column(col_num, 5, 20)] \
-                                                    for row_num, row_data in enumerate(z)\
-                                                    for col_num, col_data in enumerate(row_data)]
-    except (TypeError, AttributeError):
+        worksheet = workbook_.add_worksheet()
+        [[worksheet.write(row_num+1, col_num, col_data), \
+          worksheet.set_column(col_num, 5, 20)] \
+                                                for row_num, row_data in enumerate(data)\
+                                                for col_num, col_data in enumerate(row_data)]
+    except (Exception, TypeError, AttributeError):
+        log.error("Exception occurred", exc_info=True)
+        time.sleep(20)
+
+def check_type(xml):
+    try:
+        data = next(parsingxml(xml))
+        log.info(f"Суммарно: {len(data)}")
+
+        x = [item for item in data if item[6] == "Перерасчет (103)"]
+        y = [item for item in data if item[6] == "Перенос денежных средств (106)"]
+        z = [item for item in data if item[6] == "Оплата наличными (возврат средств) (109)"]
+
+        log.info(f"Количество перерасчетов за Июнь: {len(x)}")
+        log.info(f"Количество переносов за Июнь: {len(y)}")
+        log.info(f"Количество возвратов за Июнь: {len(z)}")
+    except (Exception, TypeError, AttributeError):
         log.error("Exception occurred", exc_info=True)
         time.sleep(20)
     else:
-        log.info("Экспортировано в xlsx успешно")
-        input("Нажмите Enter для выхода.")
+        try:
+            with Workbook('C:\\PythonProgs\\ForReports\\Payments\\Платежи.xlsx') as workbook:
+                transform_data(workbook, x)
+                transform_data(workbook, y)
+                transform_data(workbook, z)
+        except (Exception, TypeError, AttributeError):
+            log.error("Exception occurred", exc_info=True)
+            time.sleep(20)
+        else:
+            log.info("Экспортировано в xlsx успешно")
+            input("Нажмите Enter для выхода.")
 
 if __name__ == "__main__":
-    log = logging.getLogger(__name__)
-    log.setLevel(logging.INFO)
-    f_format = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.INFO)
-    handler.setFormatter(f_format)
-    log.addHandler(handler)
-    check_type(document1)
+    try:
+        log = logging.getLogger(__name__)
+        log.setLevel(logging.INFO)
+        f_format = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(f_format)
+        log.addHandler(handler)
+    except Exception as exc:
+        print(exc)
+        time.sleep(20)
+    else:
+        check_type(document)
