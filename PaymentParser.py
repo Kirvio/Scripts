@@ -1,10 +1,38 @@
 import xml.dom.minidom as minidom
-from xlsxwriter.workbook import Workbook
 import logging
-import sys
 import time
+import sys
+try:
+    from xlsxwriter.workbook import Workbook
+    from dateutil import parser
+except ImportError as err:
+    print(err)
+    time.sleep(20)
 
 document = 'C:\\PythonProgs\\ForReports\\Payments\\Payment report.xml'
+
+def dt_convert(dt):
+    return parser.parse(dt).strftime("%d.%m.%Y")
+
+def convert_items(lst):
+    try:
+        for item in lst:
+            item[0] = dt_convert(item[0])
+            item[1] = dt_convert(item[1])
+    except (TypeError, parser.ParserError):
+        log.error("Exception occurred", exc_info=True)
+        time.sleep(20)
+
+def transform_data(workbook_, data, sheet_name):
+    try:
+        worksheet = workbook_.add_worksheet(name=sheet_name)
+        [[worksheet.write(row_num+1, col_num, col_data), \
+          worksheet.set_column(col_num, 5, 20)] \
+                                                for row_num, row_data in enumerate(data)\
+                                                for col_num, col_data in enumerate(row_data)]
+    except (Exception, TypeError, AttributeError):
+        log.error("Exception occurred", exc_info=True)
+        time.sleep(20)
 
 def parsingxml(xml):
     try:
@@ -29,25 +57,17 @@ def parsingxml(xml):
         y = zip(*[iter(y)] * 7)
         yield tuple(y)
 
-def transform_data(workbook_, data):
-    try:
-        worksheet = workbook_.add_worksheet()
-        [[worksheet.write(row_num+1, col_num, col_data), \
-          worksheet.set_column(col_num, 5, 20)] \
-                                                for row_num, row_data in enumerate(data)\
-                                                for col_num, col_data in enumerate(row_data)]
-    except (Exception, TypeError, AttributeError):
-        log.error("Exception occurred", exc_info=True)
-        time.sleep(20)
-
 def check_type(xml):
     try:
         data = next(parsingxml(xml))
         log.info(f"Суммарно: {len(data)}")
 
-        x = [item for item in data if item[6] == "Перерасчет (103)"]
-        y = [item for item in data if item[6] == "Перенос денежных средств (106)"]
-        z = [item for item in data if item[6] == "Оплата наличными (возврат средств) (109)"]
+        x = [list(item) for item in data if item[6] == "Перерасчет (103)"]
+        y = [list(item) for item in data if item[6] == "Перенос денежных средств (106)"]
+        z = [list(item) for item in data if item[6] == "Оплата наличными (возврат средств) (109)"]
+        convert_items(x)
+        convert_items(y)
+        convert_items(z)
 
         log.info(f"Количество перерасчетов за Июнь: {len(x)}")
         log.info(f"Количество переносов за Июнь: {len(y)}")
@@ -58,9 +78,9 @@ def check_type(xml):
     else:
         try:
             with Workbook('C:\\PythonProgs\\ForReports\\Payments\\Платежи.xlsx') as workbook:
-                transform_data(workbook, x)
-                transform_data(workbook, y)
-                transform_data(workbook, z)
+                transform_data(workbook, x, sheet_name="Перерасчеты")
+                transform_data(workbook, y, sheet_name="Переносы")
+                transform_data(workbook, z, sheet_name="Возвраты")
         except (Exception, TypeError, AttributeError):
             log.error("Exception occurred", exc_info=True)
             time.sleep(20)
