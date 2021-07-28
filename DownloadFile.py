@@ -1,8 +1,14 @@
-from urllib3 import PoolManager
+import logging
 import shutil
 import time
 import gzip
+import sys
 import os
+try:
+    from urllib3 import PoolManager
+except ImportError as exc:
+    print(exc)
+    time.sleep(20)
 
 """
 Скрипт скачивает ЕПГ по ссылке с сайта(ссылка открывается в браузере)
@@ -20,9 +26,8 @@ def Remove(EnterPath, EnterFile):
 
 def Download(url_, path_):
     http = PoolManager()
-    r = http.request('GET', url_, preload_content=False)
+    r = http.request('GET', url_)
 
-    _recv_buffer = b''
     result = False
     try:
         with open(path_, 'wb') as out:
@@ -31,35 +36,34 @@ def Download(url_, path_):
                     data = r.read(2048)
                     if not data:
                         break
-                except (Exception, IOError) as exc:
-                    print(exc)
+                except (Exception, IOError):
+                    log.error("Exception occurred", exc_info=True)
                     time.sleep(20)
-                    break
                 else:
-                    out.write(_recv_buffer)
-    except (Exception, OSError) as exc:
-        print(exc)
+                    out.write(data)
+    except (Exception, OSError):
+        log.error("Exception occurred", exc_info=True)
         time.sleep(20)
     else:
-        print('Архив с EPG загружен')
+        log.info('Архив с EPG загружен')
         result = True
     finally:
         r.release_conn()
         yield result
 
 def Extract_archive(url_, download_path, file_path):
-    if next(Download(url_, download_path)) is True:
+    if next(Download(url_, download_path)):
         try:
             with gzip.open(download_path, 'rb') as archive_,\
-                    open(file_path, 'wb') as file_:
-                        shutil.copyfileobj(archive_, file_)
-        except (Exception, OSError) as exc:
-            print(exc)
+                      open(file_path, 'wb') as file_:
+                          shutil.copyfileobj(archive_, file_)
+        except (Exception, OSError):
+            log.error("Exception occurred", exc_info=True)
             time.sleep(20)
         else:
-            print('Файл с EPG извлечён из архива')
+            log.info('Файл с EPG извлечён из архива')
     else:
-        print('Ошибка при загрузке файла с ЕПГ')
+        log.info('Ошибка при загрузке файла с ЕПГ')
 
 def MainFunction():
     try:
@@ -67,8 +71,8 @@ def MainFunction():
         full_path = '\\'.join([epg_path, 'epg.xml'])
         exist_file = os.path.isfile(full_path)
         result = False
-    except (Exception, OSError) as exc:
-        print(exc)
+    except (Exception, OSError):
+        log.error("Exception occurred", exc_info=True)
         time.sleep(20)
     else:
         if exist_archive and exist_file:
@@ -77,8 +81,8 @@ def MainFunction():
                 [os.remove(file.path) for file in os.scandir(epg_path)]
                 time.sleep(1)
                 Extract_archive(url, archive_path, full_path)
-            except (Exception, OSError) as exc:
-                print(exc)
+            except (Exception, OSError):
+                log.error("Exception occurred", exc_info=True)
                 time.sleep(20)
             else:
                 result = True
@@ -87,8 +91,8 @@ def MainFunction():
                 [os.remove(file.path) for file in os.scandir(epg_path)]
                 Extract_archive(url, archive_path, full_path)
                 time.sleep(1)
-            except (Exception, OSError) as exc:
-                print(exc)
+            except (Exception, OSError):
+                log.error("Exception occurred", exc_info=True)
                 time.sleep(20)
             else:
                 result = True
@@ -97,8 +101,8 @@ def MainFunction():
                 Remove(archive_path, EnterFile = 'epg.xml.gz')
                 time.sleep(1)
                 Extract_archive(url, archive_path, full_path)
-            except (Exception, OSError) as exc:
-                print(exc)
+            except (Exception, OSError):
+                log.error("Exception occurred", exc_info=True)
                 time.sleep(20)
             else:
                 result = True
@@ -109,8 +113,22 @@ def MainFunction():
         yield result
 
 if __name__ == '__main__':
-    MF = MainFunction()
-    if next(MF) is True:
-        os.startfile('D:/Network/КИТ Интернет телепрограмма/КИТ Интернет телепрограмма.exe')
+    try:
+        log = logging.getLogger(__name__)
+        log.setLevel(logging.INFO)
+        f_format = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(f_format)
+        log.addHandler(handler)
+    except Exception as exc:
+        print(exc)
+        time.sleep(20)
     else:
-        print('Ошибка')
+        MF = MainFunction()
+        if next(MF):
+            os.startfile('D:/Network/КИТ Интернет телепрограмма/КИТ Интернет телепрограмма.exe')
+            input("Нажмите Enter для выхода.")
+        else:
+            log.info('Ошибка')
+            time.sleep(20)
