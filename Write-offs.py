@@ -1,9 +1,13 @@
 import xml.dom.minidom as minidom
-from xlsxwriter.workbook import Workbook
-import logging
-import sys
-import time
 import argparse
+import logging
+import time
+import sys
+try:
+    from xlsxwriter.workbook import Workbook
+except ImportError as err:
+    print(err)
+    time.sleep(20)
 
 document = 'C:\\PythonProgs\\ForReports\\Write-offs\\DeptFor3Years27072021.xml'
 
@@ -19,7 +23,7 @@ def ParseXML(xml):
             """Поля не должны быть пустыми"""
             y = []
             [[y.append(node.data) for node in title.childNodes \
-                                                                if node.nodeType == node.TEXT_NODE]\
+                                                               if node.nodeType == node.TEXT_NODE]\
                                   for title in titles]
     except (Exception, TypeError, AttributeError):
         log.error("Exception occurred", exc_info=True)
@@ -28,7 +32,6 @@ def ParseXML(xml):
         log.info("Ищем должников за текущий месяц")
         y = zip(*[iter(y)] * 3)
         yield tuple(y)
-    pass
 
 def ParseForMonth(xml, month, year):
     try:
@@ -51,7 +54,7 @@ def ParseForMonth(xml, month, year):
             with Workbook('C:\\PythonProgs\\ForReports\\Write-offs\\Списания.xlsx') as workbook:
                 worksheet = workbook.add_worksheet()
                 [[worksheet.write(row_num+1, col_num, col_data), \
-                worksheet.set_column(col_num, 5, 20)] \
+                  worksheet.set_column(col_num, 5, 20)] \
                                                         for row_num, row_data in enumerate(x)\
                                                         for col_num, col_data in enumerate(row_data)]
         except (Exception, TypeError, AttributeError):
