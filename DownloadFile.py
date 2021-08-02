@@ -1,14 +1,10 @@
+import requests
 import logging
 import shutil
 import time
 import gzip
 import sys
 import os
-try:
-    from urllib3 import PoolManager
-except ImportError as exc:
-    print(exc)
-    time.sleep(20)
 
 """
 Скрипт скачивает ЕПГ по ссылке с сайта(ссылка открывается в браузере)
@@ -25,30 +21,24 @@ def Remove(EnterPath, EnterFile):
     os.remove(path)
 
 def Download(url_, path_):
-    http = PoolManager()
-    r = http.request('GET', url_)
-
-    result = False
     try:
-        with open(path_, 'wb') as out:
-            while True:
+        r = requests.get(url_)
+        if r.status_code != 200:
+            result = False
+        else:
+            with open(path_, 'wb') as out:
                 try:
-                    data = r.read(2048)
-                    if not data:
-                        break
+                    out.write(r.content)
                 except (Exception, IOError):
                     log.error("Exception occurred", exc_info=True)
                     time.sleep(20)
                 else:
-                    out.write(data)
+                    log.info('Архив с EPG загружен')
+                    result = True
     except (Exception, OSError):
         log.error("Exception occurred", exc_info=True)
         time.sleep(20)
-    else:
-        log.info('Архив с EPG загружен')
-        result = True
     finally:
-        r.release_conn()
         yield result
 
 def Extract_archive(url_, download_path, file_path):
