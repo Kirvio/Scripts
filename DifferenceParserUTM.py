@@ -8,8 +8,8 @@ except ImportError as err:
     print(err)
     time.sleep(20)
 
-document1 = 'C:\\PythonProgs\\ForReports\\Difference\\2021_05.xml'
-document2 = 'C:\\PythonProgs\\ForReports\\Difference\\2021_06.xml'
+document1 = 'C:\\PythonProgs\\ForReports\\Difference\\2021_06.xml'
+document2 = 'C:\\PythonProgs\\ForReports\\Difference\\2021_07.xml'
 
 def get_closing_balance(xml):
     try:
@@ -67,7 +67,8 @@ def result(xml1, xml2):
     else:
         log.info(f"Всего записей с разницей найдено: {len(c)}")
         try:
-            with Workbook('C:\\PythonProgs\\ForReports\\Difference\\Results.xlsx') as workbook:
+            with Workbook('C:\\PythonProgs\\ForReports\\Difference\\Result.xlsx',\
+                         {'strings_to_numbers': True}) as workbook:
                 worksheet = workbook.add_worksheet()
                 [[worksheet.write(row_num+1, col_num, col_data), \
                   worksheet.set_column(col_num, 5, 20)] \
