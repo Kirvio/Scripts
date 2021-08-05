@@ -9,7 +9,7 @@ except ImportError as err:
     print(err)
     time.sleep(20)
 
-document = 'C:\\PythonProgs\\ForReports\\Payments\\Payment report.xml'
+document = 'C:\\PythonProgs\\ForReports\\Payments\\2021_07_Payments.xml'
 
 def dt_convert(dt):
     return parser.parse(dt).strftime("%d.%m.%Y")
@@ -62,9 +62,9 @@ def check_type(xml):
         data = next(parsingxml(xml))
         log.info(f"Суммарно: {len(data)}")
 
-        x = [list(item) for item in data if item[6] == "Перерасчет (103)"]
-        y = [list(item) for item in data if item[6] == "Перенос денежных средств (106)"]
-        z = [list(item) for item in data if item[6] == "Оплата наличными (возврат средств) (109)"]
+        x = [list(item[:-1]) for item in data if item[6] == "Перерасчет (103)"]
+        y = [list(item[:-1]) for item in data if item[6] == "Перенос денежных средств (106)"]
+        z = [list(item[:-1]) for item in data if item[6] == "Оплата наличными (возврат средств) (109)"]
         convert_items(x)
         convert_items(y)
         convert_items(z)
@@ -77,7 +77,8 @@ def check_type(xml):
         time.sleep(20)
     else:
         try:
-            with Workbook('C:\\PythonProgs\\ForReports\\Payments\\Платежи.xlsx') as workbook:
+            with Workbook('C:\\PythonProgs\\ForReports\\Payments\\Платежи.xlsx',\
+                         {'strings_to_numbers': True, 'default_date_format': '%d.%m.%Y'}) as workbook:
                 transform_data(workbook, x, sheet_name="Перерасчеты")
                 transform_data(workbook, y, sheet_name="Переносы")
                 transform_data(workbook, z, sheet_name="Возвраты")
