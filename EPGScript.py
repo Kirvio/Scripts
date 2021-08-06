@@ -20,8 +20,8 @@ remotepath = '/home/evandrushenko/xmltv.xml'
 localpath = 'D:/EPG/xmltv.xml'
 
 # Передача xmltv файла по sftp на сервер
-def TransportData(frm, to, host='172.16.100.54', port=22,\
-                  SSHuser='evandrushenko', SSHsecret='1234567Andr'):
+def TransportData(frm, to, host='', port=22,\
+                  SSHuser='', SSHsecret=''):
     result = False
     kak = os.path.isfile(localpath)
     if kak:
@@ -41,7 +41,7 @@ def TransportData(frm, to, host='172.16.100.54', port=22,\
             log.info("xml файл с EPG на сервере")
             result = True
         finally:
-            yield result
+            return result
     else:
         print("xmltv файл отсутствует!")
         time.sleep(10)
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     else:
         ST = TransportData(frm=localpath, to=remotepath)
         time.sleep(2)
-        if next(ST):
+        if ST:
             SH = SSHConnect()
             time.sleep(2)
         else:
