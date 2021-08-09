@@ -7,7 +7,7 @@ import sys
 import os
 
 """
-Скрипт скачивает ЕПГ по ссылке с сайта(ссылка открывается в браузере)
+Скрипт скачивает ЕПГ по ссылке с сайта
 и разархивирует его в указанную директорию
 """
 
@@ -39,10 +39,10 @@ def Download(url_, path_):
         log.error("Exception occurred", exc_info=True)
         time.sleep(20)
     finally:
-        yield result
+        return result
 
 def Extract_archive(url_, download_path, file_path):
-    if next(Download(url_, download_path)):
+    if Download(url_, download_path):
         try:
             with gzip.open(download_path, 'rb') as archive_,\
                       open(file_path, 'wb') as file_:
@@ -68,8 +68,8 @@ def MainFunction():
         if exist_archive and exist_file:
             try:
                 Remove(archive_path, EnterFile = 'epg.xml.gz')
-                [os.remove(file.path) for file in os.scandir(epg_path)]
-                time.sleep(1)
+                for file in os.scandir(epg_path):
+                    os.remove(file.path)
                 Extract_archive(url, archive_path, full_path)
             except (Exception, OSError):
                 log.error("Exception occurred", exc_info=True)
@@ -78,9 +78,9 @@ def MainFunction():
                 result = True
         elif exist_file and not exist_archive:
             try:
-                [os.remove(file.path) for file in os.scandir(epg_path)]
+                for file in os.scandir(epg_path):
+                    os.remove(file.path)
                 Extract_archive(url, archive_path, full_path)
-                time.sleep(1)
             except (Exception, OSError):
                 log.error("Exception occurred", exc_info=True)
                 time.sleep(20)
@@ -89,7 +89,6 @@ def MainFunction():
         elif exist_archive and not exist_file:
             try:
                 Remove(archive_path, EnterFile = 'epg.xml.gz')
-                time.sleep(1)
                 Extract_archive(url, archive_path, full_path)
             except (Exception, OSError):
                 log.error("Exception occurred", exc_info=True)
