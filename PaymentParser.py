@@ -9,10 +9,18 @@ except ImportError as err:
     print(err)
     time.sleep(20)
 
-document = 'C:\\PythonProgs\\ForReports\\Payments\\2021_07_Payments.xml'
+PATH_ = 'C:\\PythonProgs\\ForReports\\Payments\\'
 
 def dt_convert(dt):
     return parser.parse(dt).strftime("%d.%m.%Y")
+
+def get_all_text(node) -> str:
+    if node.nodeType == node.TEXT_NODE:
+        value = node.data
+    else:
+        value = ''.join(get_all_text(child_node) for child_node in node.childNodes)
+
+    return value
 
 def convert_items(lst):
     try:
@@ -26,10 +34,10 @@ def convert_items(lst):
 def transform_data(workbook_, data, sheet_name):
     try:
         worksheet = workbook_.add_worksheet(name=sheet_name)
-        [[worksheet.write(row_num+1, col_num, col_data), \
-          worksheet.set_column(col_num, 5, 20)] \
-                                                for row_num, row_data in enumerate(data)\
-                                                for col_num, col_data in enumerate(row_data)]
+        for row_num, row_data in enumerate(data):
+            for col_num, col_data in enumerate(row_data):
+                worksheet.set_column(col_num, 5, 20)
+                worksheet.write(row_num+1, col_num, col_data)
     except (Exception, TypeError, AttributeError):
         log.error("Exception occurred", exc_info=True)
         time.sleep(20)
@@ -37,24 +45,25 @@ def transform_data(workbook_, data, sheet_name):
 def parsingxml(xml):
     try:
         with minidom.parse(xml) as doc:
-            books = doc.getElementsByTagName("row")
+            xml_tuple = (
+                "col_date_of_payment", "col_actual_payment_date", "col_account_id",
+                "col_full_name", "col_volume", "col_comment", "col_payment_method"
+            )
 
-            xml_tuple = ("col_date_of_payment", "col_actual_payment_date", "col_account_id",\
-                         "col_full_name", "col_volume", "col_comment", "col_payment_method")
-            titles = []
-            [[titles.append(book.getElementsByTagName(i)[0]) for i in xml_tuple] \
-                                                             for book in books]
-            """Поля не должны быть пустыми"""
             y = []
-            [[y.append(node.data) for node in title.childNodes \
-                                                               if node.nodeType == node.TEXT_NODE]\
-                                  for title in titles]
+            for row_el in doc.getElementsByTagName("row"):
+                row = []
+                for tag_name in xml_tuple:
+                    child_el = row_el.getElementsByTagName(tag_name)[0]
+                    child_text = get_all_text(child_el) or "No data"
+                    row.append(child_text)
+
+                y.append(row)
     except (Exception, TypeError, AttributeError):
         log.error("Exception occurred", exc_info=True)
         time.sleep(20)
     else:
         log.info("Считаем количество платежей")
-        y = zip(*[iter(y)] * 7)
         yield tuple(y)
 
 def check_type(xml):
@@ -102,4 +111,5 @@ if __name__ == "__main__":
         print(exc)
         time.sleep(20)
     else:
+        document = ''.join([PATH_, sys.argv[1]])
         check_type(document)
