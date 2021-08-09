@@ -8,45 +8,49 @@ except ImportError as err:
     print(err)
     time.sleep(20)
 
-document1 = 'C:\\PythonProgs\\ForReports\\Difference\\2021_06.xml'
-document2 = 'C:\\PythonProgs\\ForReports\\Difference\\2021_07.xml'
+PATH_ = 'C:\\PythonProgs\\ForReports\\Difference\\'
+
+def get_all_text(node) -> str:
+    if node.nodeType == node.TEXT_NODE:
+        value = node.data
+    else:
+        value = ''.join(get_all_text(child_node) for child_node in node.childNodes)
+
+    return value
 
 def get_closing_balance(xml):
     try:
         with minidom.parse(xml) as doc:
-            books = doc.getElementsByTagName("row")
 
             xml_tuple = ("row_id", "col_account_id", "col_login",
                          "col_full_name", "col_charges_total", "col_payments",
                          "col_closing_balance")
-            titles = []
-            [[titles.append(book.getElementsByTagName(i)[0]) for i in xml_tuple] \
-                                                             for book in books]
             y = []
-            [[y.append(node.data) for node in title.childNodes \
-                                                               if node.nodeType == node.TEXT_NODE] \
-                                  for title in titles]
+            for row_el in doc.getElementsByTagName("row"):
+                row = []
+                for tag_name in xml_tuple:
+                    child_el = row_el.getElementsByTagName(tag_name)[0]
+                    child_text = get_all_text(child_el) or "No data"
+                    row.append(child_text)
+
+                y.append(row)
     except (Exception, TypeError, AttributeError):
         log.error("Exception occurred", exc_info=True)
         time.sleep(20)
     else:
         log.info("Исходящий баланс на позапрошлый месяц проверен")
-        y = zip(*[iter(y)] * 7)
         yield tuple(y)
 
 def get_initial_balance(xml):
     try:
         with minidom.parse(xml) as doc:
-            books = doc.getElementsByTagName("row")
-
-            titles = []
-            [titles.append(book.getElementsByTagName("col_initial_balance")[0]) \
-                                                                                for book in books]
 
             x = []
-            [[x.append(node.data) for node in title.childNodes \
-                                                               if node.nodeType == node.TEXT_NODE] \
-                                  for title in titles]
+            for row_el in doc.getElementsByTagName("row"):
+                child_el = row_el.getElementsByTagName("col_initial_balance")[0]
+                child_text = get_all_text(child_el)
+
+                x.append(child_text)
     except (Exception, TypeError, AttributeError):
         log.error("Exception occurred", exc_info=True)
         time.sleep(20)
@@ -70,10 +74,10 @@ def result(xml1, xml2):
             with Workbook('C:\\PythonProgs\\ForReports\\Difference\\Result.xlsx',\
                          {'strings_to_numbers': True}) as workbook:
                 worksheet = workbook.add_worksheet()
-                [[worksheet.write(row_num+1, col_num, col_data), \
-                  worksheet.set_column(col_num, 5, 20)] \
-                                                        for row_num, row_data in enumerate(c)\
-                                                        for col_num, col_data in enumerate(row_data)]
+                for row_num, row_data in enumerate(c[:-1]):
+                    for col_num, col_data in enumerate(row_data):
+                        worksheet.set_column(col_num, 5, 20)
+                        worksheet.write(row_num+1, col_num, col_data)
         except (TypeError, AttributeError):
             log.error("Exception occurred", exc_info=True)
             time.sleep(20)
@@ -94,4 +98,6 @@ if __name__ == "__main__":
         print(exc)
         time.sleep(20)
     else:
+        document1 = ''.join([PATH_, sys.argv[1]])
+        document2 = ''.join([PATH_, sys.argv[2]])
         result(document1, document2)
