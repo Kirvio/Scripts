@@ -11,39 +11,51 @@ except ImportError as err:
 
 document = 'C:\\PythonProgs\\ForReports\\Write-offs\\DeptFor3Years27072021.xml'
 
+def get_all_text(node) -> str:
+    if node.nodeType == node.TEXT_NODE:
+        value = node.data
+    else:
+        value = ''.join(get_all_text(child_node) for child_node in node.childNodes)
+
+    return value
+
 def ParseXML(xml):
     try:
         with minidom.parse(xml) as doc:
-            books = doc.getElementsByTagName("row")
-
-            xml_tuple = ("col_login", "col_account_id", "col_start_time")
-            titles = []
-            [[titles.append(book.getElementsByTagName(i)[0]) for i in xml_tuple] \
-                                                             for book in books]
-            """Поля не должны быть пустыми"""
+            xml_tuple = (
+                "col_login", "col_account_id", "col_start_time"
+            )
             y = []
-            [[y.append(node.data) for node in title.childNodes \
-                                                               if node.nodeType == node.TEXT_NODE]\
-                                  for title in titles]
+            for row_el in doc.getElementsByTagName("row"):
+                row = []
+                for tag_name in xml_tuple:
+                    child_el = row_el.getElementsByTagName(tag_name)[0]
+                    child_text = get_all_text(child_el) or "No data"
+                    row.append(child_text)
+
+                y.append(row)
     except (Exception, TypeError, AttributeError):
         log.error("Exception occurred", exc_info=True)
         time.sleep(20)
     else:
         log.info("Ищем должников за текущий месяц")
-        y = zip(*[iter(y)] * 3)
         yield tuple(y)
 
 def ParseForMonth(xml, month, year):
     try:
         data = next(ParseXML(xml))
-        __month_dict = {'01': 'Jan', '02': 'Feb',
-                        '03': 'Mar', '04': 'Apr',
-                        '05': 'May', '06': 'Jun',
-                        '07': 'Jul', '08': 'Aug',
-                        '09': 'Sep', '10': 'Oct',
-                        '11': 'Nov', '12': 'Dec'}
+        __month_dict = {
+            '01': 'Jan', '02': 'Feb',
+            '03': 'Mar', '04': 'Apr',
+            '05': 'May', '06': 'Jun',
+            '07': 'Jul', '08': 'Aug',
+            '09': 'Sep', '10': 'Oct',
+            '11': 'Nov', '12': 'Dec'
+        }
 
-        x = [item for item in data if __month_dict[month] in item[2] and year in item[2]]
+        x = [item for item in data \
+                                   if __month_dict[month] in item[2] \
+                                                                     and year in item[2]]
 
         log.info(f"Количество должников за {'.'.join([month, year])}: {len(x)}")
     except (Exception, TypeError, AttributeError):
@@ -53,10 +65,10 @@ def ParseForMonth(xml, month, year):
         try:
             with Workbook('C:\\PythonProgs\\ForReports\\Write-offs\\Списания.xlsx') as workbook:
                 worksheet = workbook.add_worksheet()
-                [[worksheet.write(row_num+1, col_num, col_data), \
-                  worksheet.set_column(col_num, 5, 20)] \
-                                                        for row_num, row_data in enumerate(x)\
-                                                        for col_num, col_data in enumerate(row_data)]
+                for row_num, row_data in enumerate(x):
+                    for col_num, col_data in enumerate(row_data):
+                        worksheet.set_column(col_num, 5, 20)
+                        worksheet.write(row_num+1, col_num, col_data)
         except (Exception, TypeError, AttributeError):
             log.error("Exception occurred", exc_info=True)
             time.sleep(20)
