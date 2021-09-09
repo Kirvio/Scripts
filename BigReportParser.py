@@ -133,11 +133,18 @@ def service_function(location_, files_):
     services_xml = ''.join([location_, files_[0]])
     data = next(services_parser(services_xml))
 
-    summary_ = [item for item in data if item[0] in "Суммарно"]
-    one_time_service_ = [item for item in data if item[3] in "Разовая услуга"]
-
-    periodic_service = [float(a[4]) for a in summary_ if a[3] in "Периодическая услуга"]
-    ip_traffic = [float(b[4]) for b in summary_ if b[3] in "Передача IP трафика"]
+    summary_ = [
+                item for item in data if item[0] in "Суммарно"
+            ]
+    one_time_service_ = [
+                         item for item in data if item[3] in "Разовая услуга"
+                    ]
+    periodic_service = [
+                        float(a[4]) for a in summary_ if a[3] in "Периодическая услуга"
+                    ]
+    ip_traffic = [
+                  float(b[4]) for b in summary_ if b[3] in "Передача IP трафика"
+              ]
 
     veche_lighting_serv = get_summary(serv_list=data, condition="ТП ООО", \
                                       report_type="Услуги", usual=False)
@@ -325,17 +332,21 @@ if __name__ == "__main__":
         time.sleep(20)
     else:
         parser = argparse.ArgumentParser(
-        description='Connect to a switch over SSH and dump the running-config',
-        epilog='''You will need the paramiko SSH library installed to run this. On Ubuntu this can be installed with: sudo apt-get install python3-paramiko''',
-    )
-    parser.add_argument("--services_report", help="Enter file name of services report(xml)", required=True)
-    parser.add_argument("--main_report", help="Enter file name of services report(xml)", required=True)
-    parser.add_argument("--payments_report", help="Enter file name of payments report(xml)", required=True)
-    parser.add_argument("--other_charges_report", help="Enter other charges report(xml)", action="store_true")
-    parser.add_argument("--traffic_report", help="Enter traffic report(xml)", action="store_true")
-    args = parser.parse_args()
-    files = (
-        args.services_report, args.main_report, args.payments_report,
-        args.other_charges_report, args.traffic_report
-    )
-    to_xlsx(location, files)
+        description='xml parser for mothly report'
+        )
+        parser.add_argument("--services_report",
+                            help="Enter file name of services report(xml)", required=True)
+        parser.add_argument("--main_report",
+                            help="Enter file name of services report(xml)", required=True)
+        parser.add_argument("--payments_report",
+                            help="Enter file name of payments report(xml)", required=True)
+        parser.add_argument("--other_charges_report",
+                            help="Enter other charges report(xml)", action="store_true")
+        parser.add_argument("--traffic_report",
+                            help="Enter traffic report(xml)", action="store_true")
+        args = parser.parse_args()
+        files = (
+            args.services_report, args.main_report, args.payments_report,
+            args.other_charges_report, args.traffic_report
+        )
+        to_xlsx(location, files)
