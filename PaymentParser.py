@@ -25,8 +25,15 @@ def get_all_text(node) -> str:
 def convert_items(lst):
     try:
         for item in lst:
-            item[0] = dt_convert(item[0])
-            item[1] = dt_convert(item[1])
+            if "MSK" not in item[0]:
+                log.info("Wrong date format")
+                raise Exception("Wrong date format")
+            elif "MSK" not in item[1]:
+                log.info("Wrong date format")
+                raise Exception("Wrong date format")
+            else:
+                item[0] = dt_convert(item[0])
+                item[1] = dt_convert(item[1])
     except (TypeError, parser.ParserError):
         log.error("Exception occurred", exc_info=True)
         time.sleep(20)
@@ -71,9 +78,21 @@ def check_type(xml):
         data = next(parsingxml(xml))
         log.info(f"Суммарно: {len(data)}")
 
-        x = [list(item[:-1]) for item in data if item[6] == "Перерасчет (103)"]
-        y = [list(item[:-1]) for item in data if item[6] == "Перенос денежных средств (106)"]
-        z = [list(item[:-1]) for item in data if item[6] == "Оплата наличными (возврат средств) (109)"]
+        x = [
+            list(item[:-1]) for item in data \
+                                             if item[6] == "Перерасчет (103)"\
+                                             and item[2] != "Суммарно"
+        ]
+        y = [
+            list(item[:-1]) for item in data \
+                                             if item[6] == "Перенос денежных средств (106)"\
+                                             and item[2] != "Суммарно"
+        ]
+        z = [
+            list(item[:-1]) for item in data \
+                                             if item[6] == "Оплата наличными (возврат средств) (109)"\
+                                             and item[2] != "Суммарно"
+        ]
         convert_items(x)
         convert_items(y)
         convert_items(z)
