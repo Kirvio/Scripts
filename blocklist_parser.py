@@ -93,10 +93,12 @@ class BlocklistParser(object):
             root = tree.getroot()
             log.info('Parsing blocklist file')
             for res in root.findall('resource'):
-                if res.find('ip').text != '-':
-                    iplist.append(str(res.find('ip').text).strip())
-                elif res.find('dns').text != '-':
-                    dnslist.append(res.find('dns').text)
+                ip = res.find('ip').text
+                dns = res.find('dns').text
+                if dns != "-":
+                    dnslist.append(dns)
+                if ip != "-":
+                    iplist.append(str(ip).strip())
             self._writeIPs(iplist, self.ip_list)
             self._writeIPs(dnslist, self.dns_list, ip=0)
         except Exception:
