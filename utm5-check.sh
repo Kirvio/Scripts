@@ -31,6 +31,7 @@ function MainFunction {
     fi
     for file in ${raw_files_list}; do
 	for ip in ${IP[*]}; do
+	      # $CMD$file' -s '$ip
               /bin/echo $UTM5_MOUNT_PATH$file' -s '$ip
         done
     done
