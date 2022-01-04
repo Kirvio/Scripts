@@ -1,0 +1,5 @@
+begin
+set firewall group address-group belgie-list address '193.176.182.144'
+commit
+save
+exit
